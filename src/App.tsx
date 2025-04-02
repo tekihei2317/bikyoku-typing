@@ -17,6 +17,50 @@ type Word = {
   characters: string;
 };
 
+const romanToNoteMap: { [key: string]: Omit<Note, "step"> } = {
+  // 中段
+  q: { lane: 1, shift: "middle" },
+  w: { lane: 2, shift: "middle" },
+  e: { lane: 3, shift: "middle" },
+  r: { lane: 4, shift: "middle" },
+  t: { lane: 5, shift: "middle" },
+  y: { lane: 6, shift: "middle" },
+  u: { lane: 7, shift: "middle" },
+  i: { lane: 8, shift: "middle" },
+  o: { lane: 9, shift: "middle" },
+  p: { lane: 10, shift: "middle" },
+  // 上段
+  a: { lane: 1, shift: "upper" },
+  s: { lane: 2, shift: "upper" },
+  d: { lane: 3, shift: "upper" },
+  f: { lane: 4, shift: "upper" },
+  g: { lane: 5, shift: "upper" },
+  h: { lane: 6, shift: "upper" },
+  j: { lane: 7, shift: "upper" },
+  k: { lane: 8, shift: "upper" },
+  l: { lane: 9, shift: "upper" },
+  // 下段
+  z: { lane: 1, shift: "lower" },
+  x: { lane: 2, shift: "lower" },
+  c: { lane: 3, shift: "lower" },
+  v: { lane: 4, shift: "lower" },
+  b: { lane: 5, shift: "lower" },
+  n: { lane: 6, shift: "lower" },
+  m: { lane: 7, shift: "lower" },
+};
+
+/**
+ * ローマ字の文字列を、ノーツに変換する
+ */
+function convertCharsToNotes(characters: string): Note[] {
+  // TODO: 文字列にa~z以外が含まれている場合の処理を書く
+  const notes = characters.split("").map((char, index) => ({
+    step: index + 1,
+    ...romanToNoteMap[char],
+  }));
+  return notes;
+}
+
 const Board = ({ notes }: { notes: Note[] }) => {
   return (
     <div className="flex w-xl h-[600px] border overflow-hidden">
@@ -40,9 +84,7 @@ const Board = ({ notes }: { notes: Note[] }) => {
                 style={{
                   bottom: `${note.step * 50}px`,
                 }}
-              >
-                {note.step}
-              </div>
+              ></div>
             ))}
         </div>
       ))}
@@ -136,23 +178,9 @@ function shiftToKeyboard(shift: Shift): string {
 }
 
 function App() {
-  const [notes, setNotes] = useState<Note[]>([
-    { lane: 6, shift: "upper", step: 1 },
-    { lane: 8, shift: "upper", step: 2 },
-    { lane: 4, shift: "upper", step: 3 },
-    { lane: 9, shift: "upper", step: 4 },
-    { lane: 2, shift: "middle", step: 5 },
-    { lane: 8, shift: "upper", step: 6 },
-    { lane: 8, shift: "middle", step: 7 },
-    { lane: 7, shift: "upper", step: 8 },
-    { lane: 9, shift: "upper", step: 9 },
-    { lane: 6, shift: "lower", step: 10 },
-    { lane: 3, shift: "upper", step: 11 },
-    { lane: 5, shift: "middle", step: 12 },
-    { lane: 1, shift: "middle", step: 13 },
-    { lane: 8, shift: "upper", step: 14 },
-    { lane: 2, shift: "middle", step: 15 },
-  ]);
+  const [notes, setNotes] = useState<Note[]>(
+    convertCharsToNotes("yorosikuonegaisimasu")
+  );
 
   const [currentWord] = useState<Word>(words[0]);
   const [wordCursor, setWordCursor] = useState<number>(0);
