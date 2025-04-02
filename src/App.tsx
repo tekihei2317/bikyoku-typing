@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { WordDisplay } from "./WordDisplay";
+import { useWordState } from "./use-word";
 
 /**
  * ノーツ
@@ -7,14 +9,6 @@ type Note = {
   lane: number;
   shift: "upper" | "middle" | "lower";
   step: number;
-};
-
-/**
- * ワード
- */
-type Word = {
-  display: string;
-  characters: string;
 };
 
 const romanToNoteMap: { [key: string]: Omit<Note, "step"> } = {
@@ -100,24 +94,6 @@ const JudgeLine = ({ color }: { color: string }) => {
 };
 
 /**
- * ワードを表示する
- */
-const WordDisplay = ({ word, cursor }: { word: Word; cursor: number }) => {
-  return (
-    <div className="text-center my-4">
-      <div className="text-3xl font-semibold">{word.display}</div>
-      <div className="text-2xl tracking-wider mt-1">
-        {word.characters.split("").map((char, index) => (
-          <span key={index} className={index < cursor ? "invisible" : ""}>
-            {char}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/**
  * キーボードの表示
  */
 const KeyboardLine = ({ keys }: { keys: string }) => {
@@ -140,13 +116,6 @@ function shiftNotes(notes: Note[]): Note[] {
     .filter((_, index) => index > 0)
     .map((note) => ({ ...note, step: note.step - 1 }));
 }
-
-const words: Word[] = [
-  { display: "あいうえお", characters: "aiueo" },
-  { display: "かきくけこ", characters: "kakikukeko" },
-  { display: "こんにちは", characters: "konnnitiha" },
-  { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
-];
 
 type Shift = "upper" | "middle" | "lower";
 
@@ -182,10 +151,14 @@ function App() {
     convertCharsToNotes("yorosikuonegaisimasu")
   );
 
-  const [currentWord] = useState<Word>(words[0]);
-  const [wordCursor, setWordCursor] = useState<number>(0);
-
   const [currentShift, setCurrentShift] = useState<Shift>("middle");
+  const { wordState, proceedToNextWord, advanceCursor } = useWordState();
+
+  /** ゲームを開始する */
+  const handleGameStart = useCallback(() => {
+    // wordStateを初期化する必要がある. wordsの0番目を入れる
+    proceedToNextWord();
+  }, [proceedToNextWord]);
 
   return (
     <div className="flex justify-center">
@@ -193,15 +166,28 @@ function App() {
         <Board notes={notes} />
         <JudgeLine color={shiftToColor(currentShift)} />
 
-        <WordDisplay word={currentWord} cursor={wordCursor} />
+        <div className="my-4">
+          {wordState ? (
+            <WordDisplay
+              word={wordState.currentWord}
+              cursor={wordState.cursor}
+            />
+          ) : (
+            <button className="text-center" onClick={() => handleGameStart()}>
+              スタート
+            </button>
+          )}
+        </div>
+
         <KeyboardLine keys={shiftToKeyboard(currentShift)} />
 
         <button onClick={() => setNotes(shiftNotes(notes))}>
           ノーツを進める
         </button>
-        <button onClick={() => setWordCursor(wordCursor + 1)}>
+        <button onClick={() => advanceCursor()}>
           ワードの入力を1文字進める
         </button>
+        <button onClick={() => proceedToNextWord()}>次のワードに進む</button>
         <button onClick={() => setCurrentShift(nextShift(currentShift))}>
           シフトを切り替える
         </button>
