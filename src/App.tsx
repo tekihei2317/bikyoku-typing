@@ -1,59 +1,8 @@
 import { useCallback, useState } from "react";
 import { WordDisplay } from "./WordDisplay";
 import { useWordState } from "./use-word";
-
-/**
- * ノーツ
- */
-type Note = {
-  lane: number;
-  shift: "upper" | "middle" | "lower";
-  step: number;
-};
-
-const romanToNoteMap: { [key: string]: Omit<Note, "step"> } = {
-  // 中段
-  q: { lane: 1, shift: "middle" },
-  w: { lane: 2, shift: "middle" },
-  e: { lane: 3, shift: "middle" },
-  r: { lane: 4, shift: "middle" },
-  t: { lane: 5, shift: "middle" },
-  y: { lane: 6, shift: "middle" },
-  u: { lane: 7, shift: "middle" },
-  i: { lane: 8, shift: "middle" },
-  o: { lane: 9, shift: "middle" },
-  p: { lane: 10, shift: "middle" },
-  // 上段
-  a: { lane: 1, shift: "upper" },
-  s: { lane: 2, shift: "upper" },
-  d: { lane: 3, shift: "upper" },
-  f: { lane: 4, shift: "upper" },
-  g: { lane: 5, shift: "upper" },
-  h: { lane: 6, shift: "upper" },
-  j: { lane: 7, shift: "upper" },
-  k: { lane: 8, shift: "upper" },
-  l: { lane: 9, shift: "upper" },
-  // 下段
-  z: { lane: 1, shift: "lower" },
-  x: { lane: 2, shift: "lower" },
-  c: { lane: 3, shift: "lower" },
-  v: { lane: 4, shift: "lower" },
-  b: { lane: 5, shift: "lower" },
-  n: { lane: 6, shift: "lower" },
-  m: { lane: 7, shift: "lower" },
-};
-
-/**
- * ローマ字の文字列を、ノーツに変換する
- */
-function convertCharsToNotes(characters: string): Note[] {
-  // TODO: 文字列にa~z以外が含まれている場合の処理を書く
-  const notes = characters.split("").map((char, index) => ({
-    step: index + 1,
-    ...romanToNoteMap[char],
-  }));
-  return notes;
-}
+import { Note, Word } from "./core";
+import { useNotes } from "./use-notes";
 
 const Board = ({ notes }: { notes: Note[] }) => {
   return (
@@ -111,12 +60,6 @@ const KeyboardLine = ({ keys }: { keys: string }) => {
   );
 };
 
-function shiftNotes(notes: Note[]): Note[] {
-  return notes
-    .filter((_, index) => index > 0)
-    .map((note) => ({ ...note, step: note.step - 1 }));
-}
-
 type Shift = "upper" | "middle" | "lower";
 
 /**
@@ -146,19 +89,36 @@ function shiftToKeyboard(shift: Shift): string {
   return "zxcvbnm,./";
 }
 
-function App() {
-  const [notes, setNotes] = useState<Note[]>(
-    convertCharsToNotes("yorosikuonegaisimasu")
-  );
+const words: Word[] = [
+  { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
+  { display: "あいうえお", characters: "aiueo" },
+  { display: "かきくけこ", characters: "kakikukeko" },
+  { display: "こんにちは", characters: "konnnitiha" },
+];
 
+function App() {
   const [currentShift, setCurrentShift] = useState<Shift>("middle");
-  const { wordState, proceedToNextWord, advanceCursor } = useWordState();
+  const { wordState, setNewWord, advanceCursor } = useWordState();
+  const { notes, setNewNotes, shiftNotes } = useNotes();
 
   /** ゲームを開始する */
   const handleGameStart = useCallback(() => {
     // wordStateを初期化する必要がある. wordsの0番目を入れる
-    proceedToNextWord();
-  }, [proceedToNextWord]);
+    const initialWord = words[0];
+    if (initialWord !== undefined) {
+      setNewWord(initialWord);
+      setNewNotes(initialWord.characters);
+    }
+  }, [setNewWord, setNewNotes]);
+
+  /** キーボード入力を処理する */
+  const handleKeyboardInput = useCallback(() => {
+    // 正しいキーが入力されたと仮定する
+
+    // 譜面のノーツと、ワードのカーソルを更新する
+    shiftNotes();
+    advanceCursor();
+  }, [shiftNotes, advanceCursor]);
 
   return (
     <div className="flex justify-center">
@@ -181,13 +141,11 @@ function App() {
 
         <KeyboardLine keys={shiftToKeyboard(currentShift)} />
 
-        <button onClick={() => setNotes(shiftNotes(notes))}>
-          ノーツを進める
-        </button>
-        <button onClick={() => advanceCursor()}>
+        <button onClick={() => shiftNotes()}>ノーツを進める</button>
+        <button onClick={() => handleKeyboardInput()}>
           ワードの入力を1文字進める
         </button>
-        <button onClick={() => proceedToNextWord()}>次のワードに進む</button>
+        {/* <button onClick={() => proceedToNextWord()}>次のワードに進む</button> */}
         <button onClick={() => setCurrentShift(nextShift(currentShift))}>
           シフトを切り替える
         </button>

@@ -11,40 +11,22 @@ type WordState = {
 
 type UseWordStateReturn = {
   wordState: WordState | undefined;
-  proceedToNextWord: () => void;
+  setNewWord: (newWord: Word) => void;
   advanceCursor: () => void;
 };
-
-const words: Word[] = [
-  { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
-  { display: "あいうえお", characters: "aiueo" },
-  { display: "かきくけこ", characters: "kakikukeko" },
-  { display: "こんにちは", characters: "konnnitiha" },
-];
 
 export function useWordState(): UseWordStateReturn {
   const [wordState, setWordState] = useState<WordState>();
 
-  const proceedToNextWord = useCallback(() => {
-    if (wordState === undefined) {
-      // 未定義→初期状態
+  const setNewWord = useCallback(
+    (newWord: Word) =>
       setWordState({
-        currentWord: words[0],
+        currentWord: newWord,
         currentWordIndex: 0,
         cursor: 0,
-      });
-    } else if (wordState.currentWordIndex < words.length - 1) {
-      // 次のワードがある場合
-      setWordState({
-        currentWord: words[wordState.currentWordIndex + 1],
-        currentWordIndex: wordState.currentWordIndex + 1,
-        cursor: 0,
-      });
-    } else {
-      // 次のワードがない場合は、何もしない
-      return;
-    }
-  }, [wordState]);
+      }),
+    []
+  );
 
   const advanceCursor = useCallback(() => {
     if (wordState === undefined) {
@@ -62,7 +44,7 @@ export function useWordState(): UseWordStateReturn {
 
   return {
     wordState,
-    proceedToNextWord,
+    setNewWord,
     advanceCursor,
   };
 }

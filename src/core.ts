@@ -7,3 +7,12 @@ export type Word = {
   /** 入力する文字列 */
   characters: string;
 };
+
+/**
+ * ノーツ
+ */
+export type Note = {
+  lane: number;
+  shift: "upper" | "middle" | "lower";
+  step: number;
+};
