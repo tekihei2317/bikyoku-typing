@@ -39,7 +39,7 @@ const Board = ({ notes }: { notes: Note[] }) => {
  * 判定ライン
  */
 const JudgeLine = ({ color }: { color: string }) => {
-  return <div className={`h-4 ${color} transition-colors duration-100`} />;
+  return <div className={`h-4 ${color}`} />;
 };
 
 /**
@@ -77,10 +77,13 @@ function shiftToKeyboard(shift: Shift): string {
   return "zxcvbnm,./";
 }
 
+type Layer = Shift;
+
 type PlayingScreenProps = {
   currentWord: Word;
   cursor: number;
   notes: Note[];
+  layer: Layer;
 };
 
 /**
@@ -90,15 +93,16 @@ export const PlayingScreen = ({
   currentWord,
   cursor,
   notes,
+  layer,
 }: PlayingScreenProps) => {
   return (
     <>
       <Board notes={notes} />
-      <JudgeLine color={shiftToColor("middle")} />
+      <JudgeLine color={shiftToColor(layer)} />
       <div className="my-4">
         <WordDisplay word={currentWord} cursor={cursor} />
       </div>
-      <KeyboardLine keys={shiftToKeyboard("middle")} />
+      <KeyboardLine keys={shiftToKeyboard(layer)} />
     </>
   );
 };

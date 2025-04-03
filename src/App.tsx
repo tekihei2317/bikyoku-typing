@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Note, Word } from "./core";
 import { PlayingScreen } from "./PlayingScreen";
 import { convertCharsToNotes, shiftNotes } from "./use-notes";
 import { ReadyScreen } from "./ReadyScreen";
 import { ResultsScreen } from "./ResultScreen";
+import { convertInputToCharacter } from "./keyboard-input";
 
 // type Shift = "upper" | "middle" | "lower";
 
@@ -22,10 +23,19 @@ type PlayingState = {
   cursor: number;
 };
 
+type Layer = "upper" | "middle" | "lower";
+
 function App() {
   const [gameStatus, setGameStatus] = useState<GameStatus>("Ready");
-
   const [playingState, setPlayingState] = useState<PlayingState>();
+  const [spacePressed, setSpacePressed] = useState(false);
+  const [kanaPressed, setKanaPressed] = useState(false);
+
+  const currentLayer = useMemo<Layer>(() => {
+    if (spacePressed) return "upper";
+    if (kanaPressed) return "lower";
+    return "middle";
+  }, [spacePressed, kanaPressed]);
 
   /** ゲームを開始する */
   const handleStart = useCallback(() => {
@@ -47,10 +57,28 @@ function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (playingState === undefined) return;
 
-      // キー入力が合っていると仮定する
-      const inputCharacter = event.key;
-      console.log(inputCharacter, "が入力されました");
-      console.log(playingState);
+      const pressedKey = event.key;
+      if (pressedKey === "KanjiMode") {
+        setKanaPressed(true);
+      }
+      if (pressedKey === " ") {
+        setSpacePressed(true);
+      }
+
+      const inputCharacter = convertInputToCharacter(pressedKey, {
+        spacePressed,
+        kanaPressed,
+      });
+
+      if (inputCharacter === undefined) {
+        // 文字以外の入力の場合は無視する
+        return;
+      }
+
+      const currentWord = words[playingState.currentWordIndex].characters;
+      if (currentWord[playingState.cursor] !== inputCharacter) {
+        return;
+      }
 
       const newPlayingState: PlayingState = {
         ...playingState,
@@ -80,10 +108,25 @@ function App() {
       }
     };
 
-    console.log("イベントリスナ登録");
     window.addEventListener("keydown", handleKeyDown);
-
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playingState, currentLayer, kanaPressed, spacePressed]);
+
+  useEffect(() => {
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (playingState === undefined) return;
+
+      const inputCharacter = event.key;
+      if (inputCharacter === "KanjiMode") {
+        setKanaPressed(false);
+      }
+      if (inputCharacter === " ") {
+        setSpacePressed(false);
+      }
+    };
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => window.removeEventListener("keyup", handleKeyUp);
   }, [playingState]);
 
   return (
@@ -97,6 +140,7 @@ function App() {
             notes={playingState.notes}
             currentWord={words[playingState.currentWordIndex]}
             cursor={playingState.cursor}
+            layer={currentLayer}
           />
         )}
         {gameStatus === "Results" && (
