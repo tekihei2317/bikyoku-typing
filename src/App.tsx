@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { WordDisplay } from "./WordDisplay";
-import { useWordState } from "./use-word";
 import { Note, Word } from "./core";
+import { useWordState } from "./use-word";
 import { useNotes } from "./use-notes";
 
 const Board = ({ notes }: { notes: Note[] }) => {
@@ -96,6 +96,20 @@ const words: Word[] = [
   { display: "こんにちは", characters: "konnnitiha" },
 ];
 
+type CharacterInputEvent = {
+  key: string;
+  time: number;
+};
+
+const DisplayInputCharacter = ({ event }: { event: CharacterInputEvent }) => {
+  return (
+    <div>
+      <div>{event.key}</div>
+      <div>{event.time}</div>
+    </div>
+  );
+};
+
 function App() {
   const [currentShift, setCurrentShift] = useState<Shift>("middle");
   const { wordState, setNewWord, advanceCursor } = useWordState();
@@ -119,6 +133,29 @@ function App() {
     shiftNotes();
     advanceCursor();
   }, [shiftNotes, advanceCursor]);
+
+  const [characterInput, setCharacterInput] = useState<CharacterInputEvent>();
+
+  // キーボード入力を受け取る
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      console.log(
+        "キーが押されました",
+        event.key,
+        event.key === " " ? "Yes" : "No",
+        event.code
+      );
+
+      setCharacterInput({
+        key: event.key,
+        time: Date.now(),
+      });
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="flex justify-center">
@@ -149,6 +186,8 @@ function App() {
         <button onClick={() => setCurrentShift(nextShift(currentShift))}>
           シフトを切り替える
         </button>
+
+        {characterInput && <DisplayInputCharacter event={characterInput} />}
       </div>
     </div>
   );
