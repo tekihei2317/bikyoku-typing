@@ -4,6 +4,7 @@ type UseTimerReturn = {
   timer: {
     start: () => void;
     stop: () => void;
+    reset: () => void;
   };
   calculateKPM: (totalKeys: number) => number;
   calculateCurrentKPM: (keys: number) => number;
@@ -14,20 +15,24 @@ export function useTimer(): UseTimerReturn {
   const [totalDuration, setTotalDuration] = useState<number>(0); // msで足していく
 
   const start = () => {
-    console.log("timer start");
     setStartTime(Date.now());
   };
 
   const stop = () => {
-    console.log("timer stop");
     const now = Date.now();
-    console.log((now - startTime) / 1000);
-    setTotalDuration((prev) => prev + (now - startTime));
+    setTotalDuration((prev) => {
+      const next = prev + (now - startTime);
+      return next;
+    });
+  };
+
+  const reset = () => {
+    setStartTime(0);
+    setTotalDuration(0);
   };
 
   const calculateKPM = useCallback(
     (totalKeys: number): number => {
-      console.log(totalDuration, totalKeys);
       const minutes = totalDuration / 1000 / 60;
       if (minutes === 0) return 0;
       return Math.round(totalKeys / minutes);
@@ -49,6 +54,7 @@ export function useTimer(): UseTimerReturn {
     timer: {
       start,
       stop,
+      reset,
     },
     calculateKPM,
     calculateCurrentKPM,

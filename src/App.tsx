@@ -12,8 +12,8 @@ import { useTimer } from "./use-timer";
 const words: Word[] = [
   { display: "あいうえお", characters: "aiueo" },
   { display: "かきくけこ", characters: "kakikukeko" },
-  // { display: "こんにちは", characters: "konnnitiha" },
-  // { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
+  { display: "こんにちは", characters: "konnnitiha" },
+  { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
 ];
 
 type GameStatus = "Ready" | "Playing" | "Results";
@@ -36,7 +36,6 @@ function App() {
   const [playingState, setPlayingState] = useState<PlayingState>();
   const [spacePressed, setSpacePressed] = useState(false);
   const [kanaPressed, setKanaPressed] = useState(false);
-  const [kpm, setKPM] = useState<number>(0);
 
   const currentLayer = useMemo<Layer>(() => {
     if (spacePressed) return "upper";
@@ -44,7 +43,10 @@ function App() {
     return "middle";
   }, [spacePressed, kanaPressed]);
 
-  const timerUtil = useTimer();
+  const { calculateKPM, ...timerUtil } = useTimer();
+  const kpm = useMemo(() => {
+    return calculateKPM(totalKeystrokes);
+  }, [calculateKPM]);
 
   /** ゲームを開始する */
   const handleStart = useCallback(() => {
@@ -54,6 +56,8 @@ function App() {
       currentWordIndex: 0,
       notes: convertCharsToNotes(words[0].characters),
     });
+
+    timerUtil.timer.reset();
     timerUtil.timer.start();
   }, [timerUtil]);
 
@@ -109,7 +113,6 @@ function App() {
 
         const nextWordIndex = playingState.currentWordIndex + 1;
         if (nextWordIndex === words.length) {
-          setKPM(timerUtil.calculateKPM(totalKeystrokes));
           setGameStatus("Results");
           return;
         }
