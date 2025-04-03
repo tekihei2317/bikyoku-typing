@@ -42,7 +42,7 @@ type UseNoteReturn = {
 /**
  * ローマ字の文字列を、ノーツに変換する
  */
-function convertCharsToNotes(characters: string): Note[] {
+export function convertCharsToNotes(characters: string): Note[] {
   // TODO: 文字列にa~z以外が含まれている場合の処理を書く
   const notes = characters.split("").map((char, index) => ({
     step: index + 1,
@@ -54,7 +54,7 @@ function convertCharsToNotes(characters: string): Note[] {
 /**
  * ノーツを一段下に下げる
  */
-function shiftNotes(notes: Note[]): Note[] {
+export function shiftNotes(notes: Note[]): Note[] {
   return notes
     .filter((_, index) => index > 0)
     .map((note) => ({ ...note, step: note.step - 1 }));
