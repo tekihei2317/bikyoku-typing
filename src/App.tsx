@@ -5,14 +5,15 @@ import { convertCharsToNotes, shiftNotes } from "./use-notes";
 import { ReadyScreen } from "./ReadyScreen";
 import { ResultsScreen } from "./ResultScreen";
 import { convertInputToCharacter } from "./keyboard-input";
+import { useTimer } from "./use-timer";
 
 // type Shift = "upper" | "middle" | "lower";
 
 const words: Word[] = [
   { display: "あいうえお", characters: "aiueo" },
   { display: "かきくけこ", characters: "kakikukeko" },
-  { display: "こんにちは", characters: "konnnitiha" },
-  { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
+  // { display: "こんにちは", characters: "konnnitiha" },
+  // { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
 ];
 
 type GameStatus = "Ready" | "Playing" | "Results";
@@ -25,17 +26,25 @@ type PlayingState = {
 
 type Layer = "upper" | "middle" | "lower";
 
+const totalKeystrokes = words.reduce(
+  (total, word) => total + word.characters.length,
+  0
+);
+
 function App() {
   const [gameStatus, setGameStatus] = useState<GameStatus>("Ready");
   const [playingState, setPlayingState] = useState<PlayingState>();
   const [spacePressed, setSpacePressed] = useState(false);
   const [kanaPressed, setKanaPressed] = useState(false);
+  const [kpm, setKPM] = useState<number>(0);
 
   const currentLayer = useMemo<Layer>(() => {
     if (spacePressed) return "upper";
     if (kanaPressed) return "lower";
     return "middle";
   }, [spacePressed, kanaPressed]);
+
+  const timerUtil = useTimer();
 
   /** ゲームを開始する */
   const handleStart = useCallback(() => {
@@ -45,7 +54,8 @@ function App() {
       currentWordIndex: 0,
       notes: convertCharsToNotes(words[0].characters),
     });
-  }, []);
+    timerUtil.timer.start();
+  }, [timerUtil]);
 
   /** ゲームをリスタートする */
   const handleRestart = useCallback(() => {
@@ -58,7 +68,7 @@ function App() {
       if (playingState === undefined) return;
 
       const pressedKey = event.key;
-      if (pressedKey === "KanjiMode") {
+      if (pressedKey === "KanjiMode" || pressedKey == "Convert") {
         setKanaPressed(true);
       }
       if (pressedKey === " ") {
@@ -89,38 +99,46 @@ function App() {
 
       // 最後まで打ち終えたら、次のワードへ
       if (newPlayingState.notes.length === 0) {
-        const nextWordIndex = playingState.currentWordIndex + 1;
+        timerUtil.timer.stop();
 
+        const currentWord = words[playingState.currentWordIndex];
+        console.log(
+          "KPM",
+          timerUtil.calculateCurrentKPM(currentWord.characters.length)
+        );
+
+        const nextWordIndex = playingState.currentWordIndex + 1;
         if (nextWordIndex === words.length) {
+          setKPM(timerUtil.calculateKPM(totalKeystrokes));
           setGameStatus("Results");
           return;
         }
 
-        setTimeout(
-          () =>
-            setPlayingState({
-              currentWordIndex: playingState.currentWordIndex + 1,
-              notes: convertCharsToNotes(words[nextWordIndex].characters),
-              cursor: 0,
-            }),
-          500
-        );
+        setTimeout(() => {
+          setPlayingState({
+            currentWordIndex: playingState.currentWordIndex + 1,
+            notes: convertCharsToNotes(words[nextWordIndex].characters),
+            cursor: 0,
+          });
+
+          // ワード表示と同時にタイマーを再スタート
+          timerUtil.timer.start();
+        }, 500);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playingState, currentLayer, kanaPressed, spacePressed]);
+  }, [playingState, currentLayer, kanaPressed, spacePressed, timerUtil]);
 
   useEffect(() => {
     const handleKeyUp = (event: KeyboardEvent) => {
       if (playingState === undefined) return;
 
-      const inputCharacter = event.key;
-      if (inputCharacter === "KanjiMode") {
+      if (event.key === "KanjiMode" || event.key === "Convert") {
         setKanaPressed(false);
       }
-      if (inputCharacter === " ") {
+      if (event.key === " ") {
         setSpacePressed(false);
       }
     };
@@ -144,7 +162,7 @@ function App() {
           />
         )}
         {gameStatus === "Results" && (
-          <ResultsScreen onRestart={() => handleRestart()} kpm={650} />
+          <ResultsScreen onRestart={() => handleRestart()} kpm={kpm} />
         )}
       </div>
     </div>
