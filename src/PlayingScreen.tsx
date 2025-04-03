@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { Note, Word } from "./core";
 import { WordDisplay } from "./WordDisplay";
-import { convertCharsToNotes, shiftNotes } from "./use-notes";
 
 /**
  * 譜面
@@ -79,78 +77,27 @@ function shiftToKeyboard(shift: Shift): string {
   return "zxcvbnm,./";
 }
 
-type WordState = {
+type PlayingScreenProps = {
   currentWord: Word;
   cursor: number;
-};
-
-/**
- * 文字が入力されたときに発火するイベント
- */
-type CharacterInputEvent = {
-  key: string;
-  time: number;
-};
-
-type PlayingScreenProps = {
-  word: Word;
-  characterInputEvent: CharacterInputEvent | undefined;
-  proceedToNextWord: () => void;
+  notes: Note[];
 };
 
 /**
  * プレイ画面
  */
 export const PlayingScreen = ({
-  word,
-  characterInputEvent,
-  proceedToNextWord,
+  currentWord,
+  cursor,
+  notes,
 }: PlayingScreenProps) => {
-  const [notes, setNotes] = useState<Note[]>(
-    convertCharsToNotes(word.characters)
-  );
-  const [wordState, setWordState] = useState<WordState>({
-    currentWord: word,
-    cursor: 0,
-  });
-
-  // 新しいワードを受け取ったら、ワードに関する状態を更新する
-  useEffect(() => {
-    console.log("新しいワード", word);
-    setWordState({ currentWord: word, cursor: 0 });
-    setNotes(convertCharsToNotes(word.characters));
-  }, [word]);
-
-  // 文字が入力されたときの処理
-  useEffect(() => {
-    if (characterInputEvent === undefined) return;
-
-    // とりあえず、何を押しても正解にしてみる
-    // カーソルを進める
-    setWordState((wordState) => {
-      console.log(wordState);
-      return { ...wordState, cursor: wordState.cursor + 1 };
-    });
-
-    // ノーツを更新する
-    setNotes((notes) => {
-      return shiftNotes(notes);
-    });
-  }, [characterInputEvent]);
-
-  // カーソルが最後まで到達したら、次に進む
-  useEffect(() => {
-    if (wordState.cursor === wordState.currentWord.characters.length) {
-      console.log("次のワードに進みます");
-      proceedToNextWord();
-    }
-  }, [wordState, proceedToNextWord]);
-
   return (
     <>
       <Board notes={notes} />
       <JudgeLine color={shiftToColor("middle")} />
-      <WordDisplay word={wordState.currentWord} cursor={wordState.cursor} />
+      <div className="my-4">
+        <WordDisplay word={currentWord} cursor={cursor} />
+      </div>
       <KeyboardLine keys={shiftToKeyboard("middle")} />
     </>
   );

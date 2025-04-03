@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Word } from "./core";
+import { Note, Word } from "./core";
 import { PlayingScreen } from "./PlayingScreen";
+import { convertCharsToNotes, shiftNotes } from "./use-notes";
 
 type Shift = "upper" | "middle" | "lower";
 
@@ -20,66 +21,122 @@ const words: Word[] = [
   { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
 ];
 
-type CharacterInputEvent = {
-  key: string;
-  time: number;
-};
+type GameStatus = "Ready" | "Playing" | "Results";
 
-/**
- * デバッグ用
- */
-const DisplayInputCharacter = ({ event }: { event: CharacterInputEvent }) => {
+type ReadyScreenProps = {
+  onStart: () => void;
+};
+const ReadyScreen = ({ onStart }: ReadyScreenProps) => {
   return (
     <div>
-      <div>{event.key}</div>
-      <div>{event.time}</div>
+      <button onClick={() => onStart()}>スタート</button>
     </div>
   );
 };
 
+type ResultScreenProps = {
+  onRestart: () => void;
+};
+const ResultsScreen = ({ onRestart }: ResultScreenProps) => {
+  return (
+    <div>
+      結果:
+      <button onClick={() => onRestart()}>再挑戦</button>
+    </div>
+  );
+};
+
+type PlayingState = {
+  notes: Note[];
+  currentWordIndex: number;
+  cursor: number;
+};
+
 function App() {
   const [currentShift, setCurrentShift] = useState<Shift>("middle");
-  const [characterInput, setCharacterInput] = useState<CharacterInputEvent>();
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [gameStatus, setGameStatus] = useState<GameStatus>("Ready");
 
-  const proceedToNextWord = useCallback(() => {
-    console.log("次のワードに変更します");
-    if (currentWordIndex === words.length - 1) {
-      // TODO: 結果表示画面へ進む
-      console.log("全てのワードを打ち終わりました");
-      return;
-    }
-    setCurrentWordIndex((index) => index + 1);
-  }, [currentWordIndex]);
+  const [playingState, setPlayingState] = useState<PlayingState>();
 
   /** ゲームを開始する */
+  const handleStart = useCallback(() => {
+    setGameStatus("Playing");
+    setPlayingState({
+      cursor: 0,
+      currentWordIndex: 0,
+      notes: convertCharsToNotes(words[0].characters),
+    });
+  }, []);
+
+  /** ゲームをリスタートする */
+  const handleRestart = useCallback(() => {
+    setGameStatus("Ready");
+  }, []);
 
   // キーボード入力を受け取る
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      setCharacterInput({ key: event.key, time: Date.now() });
+      if (playingState === undefined) return;
+
+      // キー入力が合っていると仮定する
+      const inputCharacter = event.key;
+      console.log(inputCharacter, "が入力されました");
+      console.log(playingState);
+
+      const newPlayingState: PlayingState = {
+        ...playingState,
+        cursor: playingState.cursor + 1,
+        notes: shiftNotes(playingState.notes),
+      };
+      setPlayingState(newPlayingState);
+
+      // 最後まで打ち終えたら、次のワードへ
+      if (newPlayingState.notes.length === 0) {
+        const nextWordIndex = playingState.currentWordIndex + 1;
+
+        if (nextWordIndex === words.length) {
+          setGameStatus("Results");
+          return;
+        }
+
+        setTimeout(
+          () =>
+            setPlayingState({
+              currentWordIndex: playingState.currentWordIndex + 1,
+              notes: convertCharsToNotes(words[nextWordIndex].characters),
+              cursor: 0,
+            }),
+          500
+        );
+      }
     };
 
+    console.log("イベントリスナ登録");
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [playingState]);
 
   return (
     <div className="flex justify-center">
       <div className="flex flex-col">
-        <PlayingScreen
-          word={words[currentWordIndex]}
-          characterInputEvent={characterInput}
-          proceedToNextWord={proceedToNextWord}
-        />
+        {gameStatus === "Ready" && (
+          <ReadyScreen onStart={() => handleStart()} />
+        )}
+        {gameStatus === "Playing" && playingState && (
+          <PlayingScreen
+            notes={playingState.notes}
+            currentWord={words[playingState.currentWordIndex]}
+            cursor={playingState.cursor}
+          />
+        )}
+        {gameStatus === "Results" && (
+          <ResultsScreen onRestart={() => handleRestart()} />
+        )}
 
-        {/* <button onClick={() => proceedToNextWord()}>次のワードに進む</button> */}
         <button onClick={() => setCurrentShift(nextShift(currentShift))}>
           シフトを切り替える
         </button>
-
-        {characterInput && <DisplayInputCharacter event={characterInput} />}
       </div>
     </div>
   );
