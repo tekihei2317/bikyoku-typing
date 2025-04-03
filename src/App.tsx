@@ -2,17 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Note, Word } from "./core";
 import { PlayingScreen } from "./PlayingScreen";
 import { convertCharsToNotes, shiftNotes } from "./use-notes";
+import { ReadyScreen } from "./ReadyScreen";
+import { ResultsScreen } from "./ResultScreen";
 
-type Shift = "upper" | "middle" | "lower";
-
-/**
- * シフト切り替えのテスト用、あとで消す
- */
-function nextShift(shift: Shift): Shift {
-  if (shift === "upper") return "middle";
-  if (shift === "middle") return "lower";
-  return "upper";
-}
+// type Shift = "upper" | "middle" | "lower";
 
 const words: Word[] = [
   { display: "あいうえお", characters: "aiueo" },
@@ -23,29 +16,6 @@ const words: Word[] = [
 
 type GameStatus = "Ready" | "Playing" | "Results";
 
-type ReadyScreenProps = {
-  onStart: () => void;
-};
-const ReadyScreen = ({ onStart }: ReadyScreenProps) => {
-  return (
-    <div>
-      <button onClick={() => onStart()}>スタート</button>
-    </div>
-  );
-};
-
-type ResultScreenProps = {
-  onRestart: () => void;
-};
-const ResultsScreen = ({ onRestart }: ResultScreenProps) => {
-  return (
-    <div>
-      結果:
-      <button onClick={() => onRestart()}>再挑戦</button>
-    </div>
-  );
-};
-
 type PlayingState = {
   notes: Note[];
   currentWordIndex: number;
@@ -53,7 +23,6 @@ type PlayingState = {
 };
 
 function App() {
-  const [currentShift, setCurrentShift] = useState<Shift>("middle");
   const [gameStatus, setGameStatus] = useState<GameStatus>("Ready");
 
   const [playingState, setPlayingState] = useState<PlayingState>();
@@ -131,12 +100,8 @@ function App() {
           />
         )}
         {gameStatus === "Results" && (
-          <ResultsScreen onRestart={() => handleRestart()} />
+          <ResultsScreen onRestart={() => handleRestart()} kpm={650} />
         )}
-
-        <button onClick={() => setCurrentShift(nextShift(currentShift))}>
-          シフトを切り替える
-        </button>
       </div>
     </div>
   );
