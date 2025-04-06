@@ -4,7 +4,7 @@ type ReadyScreenProps = {
 
 export const ReadyScreen = ({ onStart }: ReadyScreenProps) => {
   return (
-    <div className="flex w-xl flex-col items-center justify-center h-screen bg-gray-100 text-center">
+    <div className="flex w-[608px] flex-col items-center justify-center h-screen bg-gray-100 text-center">
       <h1 className="text-3xl font-bold mb-8">ホームタイピング（仮）</h1>
       <p className="mb-6 text-lg text-gray-600">
         ホームポジションだけで遊べる音ゲー風タイピングゲーム
