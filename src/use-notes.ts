@@ -23,6 +23,7 @@ const romanToNoteMap: { [key: string]: Omit<Note, "step"> } = {
   j: { lane: 7, shift: "middle" },
   k: { lane: 8, shift: "middle" },
   l: { lane: 9, shift: "middle" },
+  ";": { lane: 10, shift: "middle" },
   // 下段
   z: { lane: 1, shift: "lower" },
   x: { lane: 2, shift: "lower" },
@@ -31,6 +32,9 @@ const romanToNoteMap: { [key: string]: Omit<Note, "step"> } = {
   b: { lane: 5, shift: "lower" },
   n: { lane: 6, shift: "lower" },
   m: { lane: 7, shift: "lower" },
+  ",": { lane: 8, shift: "lower" },
+  ".": { lane: 9, shift: "lower" },
+  "/": { lane: 10, shift: "lower" },
 };
 
 type UseNoteReturn = {

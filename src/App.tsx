@@ -10,10 +10,25 @@ import { useTimer } from "./use-timer";
 // type Shift = "upper" | "middle" | "lower";
 
 const words: Word[] = [
+  { display: "ASDFG", characters: "asdfg" },
+  { display: "HJKL;", characters: "hjkl;" },
+  { display: "ASDFGHJKL;", characters: "asdfghjkl;" },
+  { display: "QERTYUIOP", characters: "qwertyuiop" },
+  { display: ";LKJHGFDSA", characters: ";lkjhgfdsa" },
+  { display: "ZXCVNM,./", characters: "zxcvbnm,./" },
   { display: "あいうえお", characters: "aiueo" },
   { display: "かきくけこ", characters: "kakikukeko" },
-  { display: "こんにちは", characters: "konnnitiha" },
+  { display: "さしすせそ", characters: "sasisuseso" },
+  { display: "答え", characters: "kotae" },
+  { display: "刺身", characters: "sasimi" },
+  { display: "平和", characters: "heiwa" },
+  { display: "夕日", characters: "yuuhi" },
+  { display: "おはようございます", characters: "ohayougozaimasu" },
   { display: "よろしくお願いします", characters: "yorosikuonegaisimasu" },
+  {
+    display: "今日も一日頑張りましょう",
+    characters: "kyouumoitinitiganbarimasyou",
+  },
 ];
 
 type GameStatus = "Ready" | "Playing" | "Results";
